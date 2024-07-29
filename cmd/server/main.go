@@ -16,48 +16,35 @@ import (
 
 func main() {
 	err := godotenv.Load()
-
 	if err != nil {
-		log.Fatal("Error: Could not load .env file")
+		log.Fatal(err)
 	}
 
 	ctx := context.Background()
 
-	workers := river.NewWorkers()
-	river.AddWorker(workers, &SortWorker{})
-
 	dbPool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
-		// handle error
+		log.Fatal(err)
 	}
 
-	riverClient, err := river.NewClient(riverpgxv5.New(dbPool), &river.Config{
-		Queues: map[string]river.QueueConfig{
-			river.QueueDefault: {MaxWorkers: 100},
-		},
-		Workers: workers,
-	})
-
+	riverClient, err := river.NewClient(riverpgxv5.New(dbPool), &river.Config{})
 	if err != nil {
-		// handle error
-	}
-
-	// Run the client inline. All executed jobs will inherit from ctx:
-	if err := riverClient.Start(ctx); err != nil {
-		// handle error
+		log.Fatal(err)
 	}
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		_, err = riverClient.Insert(ctx, SortArgs{
+		args := SortArgs{
 			Strings: []string{
 				"whale", "tiger", "bear",
 			},
-		}, nil)
+		}
+
+		_, err = riverClient.Insert(ctx, args, nil)
 
 		if err != nil {
-			// handle error
+			// TODO
 		}
 
 		fmt.Fprint(w, "Home")
