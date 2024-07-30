@@ -6,12 +6,12 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sort"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/simonhammes/river/internal/jobs"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		args := SortArgs{
+		args := jobs.SortArgs{
 			Strings: []string{
 				"whale", "tiger", "bear",
 			},
@@ -51,22 +51,4 @@ func main() {
 	})
 
 	http.ListenAndServe("localhost:8000", mux)
-}
-
-type SortArgs struct {
-	Strings []string `json:"strings"`
-}
-
-func (SortArgs) Kind() string {
-	return "sort"
-}
-
-type SortWorker struct {
-	river.WorkerDefaults[SortArgs]
-}
-
-func (w *SortWorker) Work(ctx context.Context, job *river.Job[SortArgs]) error {
-	sort.Strings(job.Args.Strings)
-	fmt.Printf("Sorted strings: %+v\n", job.Args.Strings)
-	return nil
 }
