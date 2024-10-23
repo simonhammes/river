@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17beta2
+    image: postgres:17
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Variable is not set or empty}
     ports:
